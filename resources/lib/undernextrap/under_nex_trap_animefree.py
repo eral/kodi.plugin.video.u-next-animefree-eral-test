@@ -75,8 +75,8 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         xbmcplugin.setPluginCategory(self.handle, 'Episode')
         xbmcplugin.setContent(self.handle, 'videos')
 
-        title_current_contents = self._unext_service_provider.get_title_current_contents(title_code)
-        for content in title_current_contents:
+        title_contents = self._unext_service_provider.get_title_contents(title_code)
+        for content in title_contents:
             list_item = UnderNexTrapAnimeFree.__create_xbmcgui_list_item(content)
             list_item.setProperty('IsPlayable', 'true')
             url = self.get_url(self.play_episode, content.title_code, content.episode_code)
