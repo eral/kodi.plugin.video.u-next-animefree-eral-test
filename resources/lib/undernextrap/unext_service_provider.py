@@ -96,10 +96,10 @@ class UnextServiceProvider():
                 episode_contents.append(episode_content)
         return episode_contents
 
-    def get_title_current_contents(self, title_code):
-        # type: (UnextServiceProvider, str) -> list[EpisodeContent], None
+    def get_title_current_content(self, title_code):
+        # type: (UnextServiceProvider, str) -> EpisodeContent, None
         """
-        タイトルコンテンツの取得
+        タイトルカレントコンテンツの取得
 
         Parameters
         -------
@@ -108,8 +108,8 @@ class UnextServiceProvider():
 
         Returns
         -------
-        value : list[EpisodeContent], None
-            エピソード情報群
+        value : EpisodeContent, None
+            エピソード情報
         """
         url = r'https://video-api.unext.jp/api/1/title'
         current_episode_get = self._session.get(url, headers=self.__HEADERS, params={
@@ -119,18 +119,18 @@ class UnextServiceProvider():
         if current_episode_get.status_code != 200:
             xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
-        episode_contents = []
-        if current_episode_get.text is not None:
-            current_episode_api_result = json.loads(current_episode_get.text)
-            if current_episode_api_result['common']['result']['errorCode'] != '':
-                xbmc.log('Error:' + current_episode_api_result['common']['result']['errorCode'] + '\nサーバーからエラーレスポンスが返されました', xbmc.LOGDEBUG)
-                return
-            current_episode = current_episode_api_result['data']['entities_data']['current_episode']
-            episode = current_episode['episode']
-            title_name = current_episode['title_name']
-            episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
-            episode_contents.append(episode_content)
-        return episode_contents
+        elif current_episode_get.text is None:
+            xbmc.log('Error:\nサーバーからレスポンスが返されませんでした', xbmc.LOGDEBUG)
+            return
+        current_episode_api_result = json.loads(current_episode_get.text)
+        if current_episode_api_result['common']['result']['errorCode'] != '':
+            xbmc.log('Error:' + current_episode_api_result['common']['result']['errorCode'] + '\nサーバーからエラーレスポンスが返されました', xbmc.LOGDEBUG)
+            return
+        current_episode = current_episode_api_result['data']['entities_data']['current_episode']
+        episode = current_episode['episode']
+        title_name = current_episode['title_name']
+        episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
+        return episode_content
 
     def get_movie_content(self, title_code, episode_code):
         # type: (UnextServiceProvider, str, str) -> MovieContent, None
