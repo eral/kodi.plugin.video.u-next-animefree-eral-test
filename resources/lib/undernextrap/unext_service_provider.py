@@ -60,6 +60,42 @@ class UnextServiceProvider():
             self.__session = None
             self.__session_share = False
 
+    def get_title_contents(self, title_code):
+        # type: (UnextServiceProvider, str) -> list[EpisodeContent], None
+        """
+        タイトルコンテンツの取得
+
+        Parameters
+        -------
+        title_code : str
+            タイトルコード
+
+        Returns
+        -------
+        value : list[EpisodeContent], None
+            エピソード情報群
+        """
+        url = r'https://video-api.unext.jp/api/1/title'
+        current_episode_get = self._session.get(url, headers=self.__HEADERS, params={
+            'entity[]': ['episodes'],
+            'title_code': [title_code]
+        })
+        if current_episode_get.status_code != 200:
+            xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            return
+        episode_contents = []
+        if current_episode_get.text is not None:
+            current_episode_api_result = json.loads(current_episode_get.text)
+            if current_episode_api_result['common']['result']['errorCode'] != '':
+                xbmc.log('Error:' + current_episode_api_result['common']['result']['errorCode'] + '\nサーバーからエラーレスポンスが返されました', xbmc.LOGDEBUG)
+                return
+            title_name = ''
+            episodes = current_episode_api_result['data']['entities_data']['episodes']['episode']
+            for episode in episodes:
+                episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
+                episode_contents.append(episode_content)
+        return episode_contents
+
     def get_title_current_contents(self, title_code):
         # type: (UnextServiceProvider, str) -> list[EpisodeContent], None
         """
