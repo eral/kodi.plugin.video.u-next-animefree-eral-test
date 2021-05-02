@@ -91,16 +91,8 @@ class UnextServiceProvider():
                 return
             current_episode = current_episode_api_result['data']['entities_data']['current_episode']
             episode = current_episode['episode']
-            episode_code = episode['episode_code']
-            episode_name = episode['episode_name']
             title_name = current_episode['title_name']
-            no = int(episode['no'])
-            display_no = episode['display_no']
-            introduction = episode['introduction']
-            isnew = episode['isnew']
-            islock = episode['payment_badge_code'] != ''
-            thumbnail_url = r'https://' + episode['thumbnail']['standard']
-            episode_content = EpisodeContent(episode_code, title_code, episode_name, title_name, no, display_no, introduction, isnew, islock, thumbnail_url)
+            episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
             episode_contents.append(episode_content)
         return episode_contents
 
@@ -181,6 +173,37 @@ class UnextServiceProvider():
     """
     User-Agent改変用ヘッダー
     """
+
+    @ staticmethod
+    def __create_episode_content(src, title_code, title_name):
+        # type: (object, str, str) -> EpisodeContent
+        """
+        EpisodeContentの生成
+
+        Parameters
+        -------
+        src : object
+            ソース
+        title_code : str
+            タイトルコード
+        title_name : str
+            タイトル名
+
+        Returns
+        -------
+        result : EpisodeContent
+            EpisodeContent
+        """
+        episode_code = src['episode_code']
+        episode_name = src['episode_name']
+        no = int(src['no'])
+        display_no = src['display_no']
+        introduction = src['introduction']
+        isnew = src['isnew']
+        islock = src['payment_badge_code'] != ''
+        thumbnail_url = r'https://' + src['thumbnail']['standard']
+        episode_content = EpisodeContent(episode_code, title_code, episode_name, title_name, no, display_no, introduction, isnew, islock, thumbnail_url)
+        return episode_content
 
     def __enter__(self):
         # type: (UnextServiceProvider) -> UnextServiceProvider
