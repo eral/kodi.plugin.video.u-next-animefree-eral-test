@@ -76,7 +76,7 @@ class UnextServiceProvider():
             エピソード情報群
         """
         url = r'https://video-api.unext.jp/api/1/title'
-        current_episode_get = self._session.get(url, headers=self.__HEADERS, params={
+        current_episode_get = self._session.get(url, headers=UnextServiceProvider.__HEADERS, params={
             'entity[]': ['episodes'],
             'title_code': [title_code]
         })
@@ -112,7 +112,7 @@ class UnextServiceProvider():
             エピソード情報
         """
         url = r'https://video-api.unext.jp/api/1/title'
-        current_episode_get = self._session.get(url, headers=self.__HEADERS, params={
+        current_episode_get = self._session.get(url, headers=UnextServiceProvider.__HEADERS, params={
             'entity[]': ['current_episode'],
             'title_code': [title_code]
         })
@@ -150,7 +150,7 @@ class UnextServiceProvider():
             エピソード情報群
         """
         url = r'https://video-api.unext.jp/api/1/player'
-        player_get = self._session.get(url, headers=self.__HEADERS, params={
+        player_get = self._session.get(url, headers=UnextServiceProvider.__HEADERS, params={
             'entity[]': ['playlist_url'],
             'title_code': [title_code],
             'episode_code': [episode_code]
