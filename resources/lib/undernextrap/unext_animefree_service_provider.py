@@ -160,7 +160,8 @@ class UnextAnimeFreeServiceProvider():
             if self.__browser_default_user_agent is None:
                 with webdriver.Chrome(options=options) as default_browser:
                     self.__browser_default_user_agent = default_browser.execute_script("return navigator.userAgent")
-            options.add_argument('--user-agent=' + UnextAnimeFreeServiceProvider.__CUSTOM_USER_AGENT + ' ' + self.__browser_default_user_agent)
+            options.add_argument(
+                '--user-agent=' + UnextAnimeFreeServiceProvider.__CUSTOM_USER_AGENT + ' ' + xbmc.getUserAgent() + ' ' + self.__browser_default_user_agent)
             self.__browser = webdriver.Chrome(options=options)
         return self.__browser
 
@@ -192,7 +193,7 @@ class UnextAnimeFreeServiceProvider():
     カスタムUser-Agent
     """
 
-    __HEADERS = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent()}
+    __HEADERS = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     # type: dict
     """
     User-Agent改変用ヘッダー

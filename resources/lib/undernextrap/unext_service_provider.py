@@ -204,7 +204,7 @@ class UnextServiceProvider():
             self.__session = requests.Session()
         return self.__session
 
-    __HEADERS = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent()}
+    __HEADERS = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     # type: dict
     """
     User-Agent改変用ヘッダー
