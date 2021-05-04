@@ -8,7 +8,7 @@ import xbmc
 import requests
 from .title_content import TitleContent
 import cwebdriverinstaller
-if cwebdriverinstaller.CWebDriverInstaller.append_import_path():
+if cwebdriverinstaller.CWebDriverInstallerHelper.append_import_path():
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.support.ui import WebDriverWait
