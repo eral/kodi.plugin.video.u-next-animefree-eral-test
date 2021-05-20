@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 
 class EpisodeContent():
-    def __init__(self, episode_code, title_code, episode_name, title_name, no, display_no, introduction, isnew, islock, thumbnail_url):
-        # type: (EpisodeContent, str, str, str, str, int, str, str, bool) -> None
+    def __init__(
+            self, episode_code: str, title_code: str, episode_name: str, title_name: str,
+            no: int, display_no: str, introduction: str, isnew: bool, islock: bool, thumbnail_url: str) -> None:
         self.__episode_code = episode_code
         self.__title_code = title_code
         self.__episode_name = episode_name
@@ -17,7 +17,6 @@ class EpisodeContent():
         self.__thumbnail_url = thumbnail_url
 
     def __str__(self):
-        # type: (EpisodeContent) -> dict
         return {'episode_code': self.__episode_code,
                 'title_code': self.__title_code,
                 'episode_name': self.__episode_name,
@@ -30,7 +29,6 @@ class EpisodeContent():
                 'thumbnail_url': self.__thumbnail_url}
 
     def __repr__(self):
-        # type: (EpisodeContent) -> str
         return '{0}.{1}("{2}","{3}","{4}","{5}","{6}","{7}","{8}","{9}","{10}","{11}")'.format(
             self.__module__, type(self).__name__,
             self.__episode_code, self.__title_code, self.__episode_name, self.__title_name,
@@ -39,51 +37,41 @@ class EpisodeContent():
         )
 
     @property
-    def episode_code(self):
-        # type: (EpisodeContent) -> str
+    def episode_code(self) -> str:
         return self.__episode_code
 
     @property
-    def title_code(self):
-        # type: (EpisodeContent) -> str
+    def title_code(self) -> str:
         return self.__title_code
 
     @property
-    def episode_name(self):
-        # type: (EpisodeContent) -> str
+    def episode_name(self) -> str:
         return self.__episode_name
 
     @property
-    def title_name(self):
-        # type: (EpisodeContent) -> str
+    def title_name(self) -> str:
         return self.__title_name
 
     @property
-    def no(self):
-        # type: (EpisodeContent) -> int
+    def no(self) -> int:
         return self.__no
 
     @property
-    def display_no(self):
-        # type: (EpisodeContent) -> str
+    def display_no(self) -> str:
         return self.__display_no
 
     @property
-    def introduction(self):
-        # type: (EpisodeContent) -> str
+    def introduction(self) -> str:
         return self.__introduction
 
     @property
-    def isnew(self):
-        # type: (EpisodeContent) -> bool
+    def isnew(self) -> bool:
         return self.__isnew
 
     @property
-    def islock(self):
-        # type: (EpisodeContent) -> bool
+    def islock(self) -> bool:
         return self.__islock
 
     @property
-    def thumbnail_url(self):
-        # type: (EpisodeContent) -> str
+    def thumbnail_url(self) -> str:
         return self.__thumbnail_url

@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+#!/usr/bin/env python3
+
+from __future__ import annotations
 
 import resources.lib.undernextrap as undernextrap
 

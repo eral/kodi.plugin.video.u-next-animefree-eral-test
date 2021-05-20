@@ -3,7 +3,5 @@
 #
 # U-NEXT サービスプロバイダー
 #
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
 from .under_nex_trap_animefree import UnderNexTrapAnimeFree  # noqa:F401

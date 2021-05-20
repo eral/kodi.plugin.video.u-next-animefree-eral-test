@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
+from typing import Optional
 import json
 import re
 import xbmc
@@ -29,8 +27,7 @@ class UnextAnimeFreeServiceProvider():
         self.__session = None
         self.__session_share = False
 
-    def dispose(self):
-        # type: () -> None
+    def dispose(self) -> None:
         """
         リソース破棄
         """
@@ -44,8 +41,7 @@ class UnextAnimeFreeServiceProvider():
             self.__browser = None
 
     @property
-    def browser(self):
-        # type: (UnextAnimeFreeServiceProvider) -> webdriver.remote.webdriver.WebDriver, None
+    def browser(self) -> Optional[webdriver.remote.webdriver.WebDriver]:
         """
         ブラウザ
 
@@ -57,8 +53,7 @@ class UnextAnimeFreeServiceProvider():
         return self.__browser
 
     @browser.setter
-    def browser(self, value):
-        # type: (UnextAnimeFreeServiceProvider, webdriver.remote.webdriver.WebDriver) -> None
+    def browser(self, value: webdriver.remote.webdriver.WebDriver) -> None:
         """
         ブラウザ
 
@@ -73,8 +68,7 @@ class UnextAnimeFreeServiceProvider():
         self.__browser_share = value is not None
 
     @property
-    def session(self):
-        # type: (UnextAnimeFreeServiceProvider) -> requests.Session, None
+    def session(self) -> Optional[requests.Session]:
         """
         セッション
 
@@ -86,8 +80,7 @@ class UnextAnimeFreeServiceProvider():
         return self.__session
 
     @session.setter
-    def session(self, value):
-        # type: (UnextAnimeFreeServiceProvider, requests.Session) -> None
+    def session(self, value: requests.Session) -> None:
         """
         セッション
 
@@ -101,8 +94,7 @@ class UnextAnimeFreeServiceProvider():
         self.__session = value
         self.__session_share = value is not None
 
-    def get_top_contents(self):
-        # type: (UnextAnimeFreeServiceProvider) -> list[TitleContent]
+    def get_top_contents(self) -> list[TitleContent]:
         """
         トップコンテンツの取得
 
@@ -140,8 +132,7 @@ class UnextAnimeFreeServiceProvider():
         return title_contents
 
     @property
-    def _browser(self):
-        # type: (UnextAnimeFreeServiceProvider) -> webdriver.remote.webdriver.WebDriver
+    def _browser(self) -> webdriver.remote.webdriver.WebDriver:
         """
         ブラウザ
 
@@ -166,15 +157,13 @@ class UnextAnimeFreeServiceProvider():
         return self.__browser
 
     @ property
-    def _browser_wait(self):
-        # type: (UnextAnimeFreeServiceProvider) -> WebDriverWait
+    def _browser_wait(self) -> WebDriverWait:
         if self.__browser_wait is None:
             self.__browser_wait = WebDriverWait(self._browser, 10)
         return self.__browser_wait
 
     @property
-    def _session(self):
-        # type: (UnextAnimeFreeServiceProvider) -> requests.Session
+    def _session(self) -> requests.Session:
         """
         セッション
 
@@ -187,27 +176,23 @@ class UnextAnimeFreeServiceProvider():
             self.__session = requests.Session()
         return self.__session
 
-    __CUSTOM_USER_AGENT = 'under-nex-trap-animefree/0.0.1'
-    # type: str
+    __CUSTOM_USER_AGENT: str = 'under-nex-trap-animefree/0.0.1'
     """
     カスタムUser-Agent
     """
 
-    __HEADERS = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
-    # type: dict
+    __HEADERS: dict[str, str] = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     """
     User-Agent改変用ヘッダー
     """
 
-    __TITLE_CODE_FROM_URL = re.compile(r'SID\d+')
-    # type: re.SRE_Pattern
+    __TITLE_CODE_FROM_URL: re.Pattern = re.compile(r'SID\d+')
     """
     URLからタイトルコードを取得する正規表現
     """
 
     @ staticmethod
-    def __get_title_code_from_url(url):
-        # type: (str) -> str
+    def __get_title_code_from_url(url: str) -> str:
         """
         URLからタイトルコードを取得する
 
@@ -224,8 +209,7 @@ class UnextAnimeFreeServiceProvider():
         title_code = UnextAnimeFreeServiceProvider.__TITLE_CODE_FROM_URL.search(url).group(0)
         return title_code
 
-    def __enter__(self):
-        # type: (UnextAnimeFreeServiceProvider) -> UnextAnimeFreeServiceProvider
+    def __enter__(self) -> UnextAnimeFreeServiceProvider:
         """
         With句開始
 
@@ -236,8 +220,7 @@ class UnextAnimeFreeServiceProvider():
         """
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
-        # type: (UnextAnimeFreeServiceProvider) -> bool
+    def __exit__(self, exception_type, exception_value, traceback) -> bool:
         """
         With句終了
 

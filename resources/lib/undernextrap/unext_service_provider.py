@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
+from typing import Optional
 import json
 import urllib
 import urlparse
@@ -19,8 +17,7 @@ class UnextServiceProvider():
         self.__session = None
         self.__session_share = False
 
-    def dispose(self):
-        # type: () -> None
+    def dispose(self) -> None:
         """
         リソース破棄
         """
@@ -28,8 +25,7 @@ class UnextServiceProvider():
             self.__session.close()
 
     @property
-    def session(self):
-        # type: (UnextServiceProvider) -> requests.Session, None
+    def session(self) -> Optional[requests.Session]:
         """
         セッション
 
@@ -41,8 +37,7 @@ class UnextServiceProvider():
         return self.__session
 
     @session.setter
-    def session(self, value):
-        # type: (UnextServiceProvider, requests.Session) -> None
+    def session(self, value: requests.Session) -> None:
         """
         セッション
 
@@ -60,8 +55,7 @@ class UnextServiceProvider():
             self.__session = None
             self.__session_share = False
 
-    def get_title_contents(self, title_code):
-        # type: (UnextServiceProvider, str) -> list[EpisodeContent], None
+    def get_title_contents(self, title_code: str) -> Optional[list[EpisodeContent]]:
         """
         タイトルコンテンツの取得
 
@@ -96,8 +90,7 @@ class UnextServiceProvider():
                 episode_contents.append(episode_content)
         return episode_contents
 
-    def get_title_current_content(self, title_code):
-        # type: (UnextServiceProvider, str) -> EpisodeContent, None
+    def get_title_current_content(self, title_code: str) -> Optional[EpisodeContent]:
         """
         タイトルカレントコンテンツの取得
 
@@ -132,8 +125,7 @@ class UnextServiceProvider():
         episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
         return episode_content
 
-    def get_movie_content(self, title_code, episode_code):
-        # type: (UnextServiceProvider, str, str) -> MovieContent, None
+    def get_movie_content(self, title_code: str, episode_code: str) -> Optional[MovieContent]:
         """
         タイトルコンテンツの取得
 
@@ -190,8 +182,7 @@ class UnextServiceProvider():
         return movie_content
 
     @property
-    def _session(self):
-        # type: (UnextServiceProvider) -> requests.Session
+    def _session(self) -> requests.Session:
         """
         セッション
 
@@ -204,15 +195,13 @@ class UnextServiceProvider():
             self.__session = requests.Session()
         return self.__session
 
-    __HEADERS = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
-    # type: dict
+    __HEADERS: dict[str, str] = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     """
     User-Agent改変用ヘッダー
     """
 
     @ staticmethod
-    def __create_episode_content(src, title_code, title_name):
-        # type: (object, str, str) -> EpisodeContent
+    def __create_episode_content(src, title_code: str, title_name: str) -> EpisodeContent:
         """
         EpisodeContentの生成
 
@@ -241,8 +230,7 @@ class UnextServiceProvider():
         episode_content = EpisodeContent(episode_code, title_code, episode_name, title_name, no, display_no, introduction, isnew, islock, thumbnail_url)
         return episode_content
 
-    def __enter__(self):
-        # type: (UnextServiceProvider) -> UnextServiceProvider
+    def __enter__(self) -> UnextServiceProvider:
         """
         With句開始
 
@@ -253,8 +241,7 @@ class UnextServiceProvider():
         """
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
-        # type: (UnextServiceProvider) -> bool
+    def __exit__(self, exception_type, exception_value, traceback) -> bool:
         """
         With句終了
 
