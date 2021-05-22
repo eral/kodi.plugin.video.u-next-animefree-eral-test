@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Union, Tuple, Callable
 import sys
-import urllib
-import urlparse
+import urllib.parse
 import pickle
 import base64
 
@@ -70,8 +69,7 @@ class ScriptAddonRouterForKodi(object):
         url : str
             URL
         """
-        result = self.url + '?' \
-            + ScriptAddonRouterForKodi.get_url_query(funciton, *args)
+        result = self.url + '?' + ScriptAddonRouterForKodi.get_url_query(funciton, *args)
         return result
 
     @ staticmethod
@@ -92,8 +90,7 @@ class ScriptAddonRouterForKodi(object):
         url_query : str
             URLクエリ
         """
-        result = 'f=' \
-            + urllib.quote(ScriptAddonRouterForKodi.__get_attr_name(funciton))
+        result = 'f=' + urllib.parse.quote(ScriptAddonRouterForKodi.__get_attr_name(funciton))
         for i, value in enumerate(args):
             i = str(i)
             value = ScriptAddonRouterForKodi.__serialize_query_value(value)
@@ -118,7 +115,7 @@ class ScriptAddonRouterForKodi(object):
         args : list[str]
             引数
         """
-        query = urlparse.parse_qs(url_query)
+        query = urllib.parse.parse_qs(url_query)
         if 'f' in query:
             attr_name = query['f'][0]
         else:
@@ -151,10 +148,10 @@ class ScriptAddonRouterForKodi(object):
         """
         if isinstance(value, str):
             return value
-        elif type(value).__name__ == 'instancemethod':
+        elif callable(value):
             return value.__name__
         else:
-            raise ValueError('entrance_funciton')
+            raise ValueError('value')
 
     @ staticmethod
     def __serialize_query_value(value: object) -> str:
@@ -172,7 +169,7 @@ class ScriptAddonRouterForKodi(object):
             シリアライズテキスト
         """
         if isinstance(value, str):
-            value = 's' + urllib.quote(value)
+            value = 's' + urllib.parse.quote(value)
         elif isinstance(value, bool):
             value = 'b' + str(value)
         elif isinstance(value, int):
@@ -181,7 +178,7 @@ class ScriptAddonRouterForKodi(object):
             value = 'f' + str(value)
         else:
             value_bytes = pickle.dumps(value)
-            value_base64urlsafe = base64.b64encode(value_bytes, '-_').replace('=', '.')
+            value_base64urlsafe = base64.b64encode(value_bytes, b'-_').replace(b'=', b'.')
             value = 'o' + value_base64urlsafe.decode()
         return value
 
@@ -201,7 +198,7 @@ class ScriptAddonRouterForKodi(object):
             オブジェクト
         """
         if value[0] == 's':
-            value = str(urlparse.unquote(value[1:]))
+            value = str(urllib.parse.unquote(value[1:]))
         elif value[0] == 'b':
             value = bool(value[1:])
         elif value[0] == 'i':

@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional
 import json
 import urllib
-import urlparse
 import xbmc
 import requests
 from .episode_content import EpisodeContent
@@ -160,21 +159,21 @@ class UnextServiceProvider():
             return
         play_token = entity['play_token']
         movie_profile = entity['url_info'][0]['movie_profile']['dash']
-        playlist_url_list = list(urlparse.urlparse(movie_profile['playlist_url']))
-        playlist_url_query = urlparse.parse_qs(playlist_url_list[4])
+        playlist_url_list = list(urllib.parse.urlparse(movie_profile['playlist_url']))
+        playlist_url_query = urllib.parse.parse_qs(playlist_url_list[4])
         playlist_url_query['play_token'] = [play_token]
         playlist_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in playlist_url_query.items()})
 
-        license_url_list = list(urlparse.urlparse(movie_profile['license_url_list']['widevine']))
+        license_url_list = list(urllib.parse.urlparse(movie_profile['license_url_list']['widevine']))
         license_url_query = {'play_token': [play_token]}
         license_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in license_url_query.items()})
 
-        movie_url = urlparse.urlunparse(playlist_url_list)
+        movie_url = urllib.parse.urlunparse(playlist_url_list)
         movie_headers = []
         protocol = 'mpd'
         drm = 'com.widevine.alpha'
         mime = 'application/dash+xml'
-        license_url = urlparse.urlunparse(license_url_list)
+        license_url = urllib.parse.urlunparse(license_url_list)
         license_headers = []
         license_post_data = 'R{SSM}'
         license_response = ''
