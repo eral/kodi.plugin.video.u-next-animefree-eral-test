@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
+from typing import Optional
 import json
-import urllib
-import urlparse
+import urllib.parse
 import xbmc
 import requests
 from .episode_content import EpisodeContent
@@ -19,8 +16,7 @@ class UnextServiceProvider():
         self.__session = None
         self.__session_share = False
 
-    def dispose(self):
-        # type: () -> None
+    def dispose(self) -> None:
         """
         リソース破棄
         """
@@ -28,8 +24,7 @@ class UnextServiceProvider():
             self.__session.close()
 
     @property
-    def session(self):
-        # type: (UnextServiceProvider) -> requests.Session, None
+    def session(self) -> Optional[requests.Session]:
         """
         セッション
 
@@ -41,8 +36,7 @@ class UnextServiceProvider():
         return self.__session
 
     @session.setter
-    def session(self, value):
-        # type: (UnextServiceProvider, requests.Session) -> None
+    def session(self, value: requests.Session) -> None:
         """
         セッション
 
@@ -60,8 +54,7 @@ class UnextServiceProvider():
             self.__session = None
             self.__session_share = False
 
-    def get_title_contents(self, title_code):
-        # type: (UnextServiceProvider, str) -> list[EpisodeContent], None
+    def get_title_contents(self, title_code: str) -> Optional[list[EpisodeContent]]:
         """
         タイトルコンテンツの取得
 
@@ -81,7 +74,7 @@ class UnextServiceProvider():
             'title_code': [title_code]
         })
         if current_episode_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(current_episode_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         episode_contents = []
         if current_episode_get.text is not None:
@@ -96,8 +89,7 @@ class UnextServiceProvider():
                 episode_contents.append(episode_content)
         return episode_contents
 
-    def get_title_current_content(self, title_code):
-        # type: (UnextServiceProvider, str) -> EpisodeContent, None
+    def get_title_current_content(self, title_code: str) -> Optional[EpisodeContent]:
         """
         タイトルカレントコンテンツの取得
 
@@ -117,7 +109,7 @@ class UnextServiceProvider():
             'title_code': [title_code]
         })
         if current_episode_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(current_episode_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         elif current_episode_get.text is None:
             xbmc.log('Error:\nサーバーからレスポンスが返されませんでした', xbmc.LOGDEBUG)
@@ -132,8 +124,7 @@ class UnextServiceProvider():
         episode_content = UnextServiceProvider.__create_episode_content(episode, title_code, title_name)
         return episode_content
 
-    def get_movie_content(self, title_code, episode_code):
-        # type: (UnextServiceProvider, str, str) -> MovieContent, None
+    def get_movie_content(self, title_code: str, episode_code: str) -> Optional[MovieContent]:
         """
         タイトルコンテンツの取得
 
@@ -156,7 +147,7 @@ class UnextServiceProvider():
             'episode_code': [episode_code]
         })
         if player_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(player_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(player_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         player = json.loads(player_get.text)
         if player['common']['result']['errorCode'] != '':
@@ -164,25 +155,25 @@ class UnextServiceProvider():
             return
         entity = player['data']['entities_data']['playlist_url']
         if entity['result_status'] != 200:
-            xbmc.log('Error:' + unicode(str(entity['result_status'])) + '\nサーバーからエラーデータが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(entity['result_status']) + '\nサーバーからエラーデータが返されました', xbmc.LOGDEBUG)
             return
         play_token = entity['play_token']
         movie_profile = entity['url_info'][0]['movie_profile']['dash']
-        playlist_url_list = list(urlparse.urlparse(movie_profile['playlist_url']))
-        playlist_url_query = urlparse.parse_qs(playlist_url_list[4])
+        playlist_url_list = list(urllib.parse.urlparse(movie_profile['playlist_url']))
+        playlist_url_query = urllib.parse.parse_qs(playlist_url_list[4])
         playlist_url_query['play_token'] = [play_token]
-        playlist_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in playlist_url_query.items()})
+        playlist_url_list[4] = urllib.parse.urlencode({k: str(v[0]) for k, v in playlist_url_query.items()})
 
-        license_url_list = list(urlparse.urlparse(movie_profile['license_url_list']['widevine']))
+        license_url_list = list(urllib.parse.urlparse(movie_profile['license_url_list']['widevine']))
         license_url_query = {'play_token': [play_token]}
-        license_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in license_url_query.items()})
+        license_url_list[4] = urllib.parse.urlencode({k: str(v[0]) for k, v in license_url_query.items()})
 
-        movie_url = urlparse.urlunparse(playlist_url_list)
+        movie_url = urllib.parse.urlunparse(playlist_url_list)
         movie_headers = []
         protocol = 'mpd'
         drm = 'com.widevine.alpha'
         mime = 'application/dash+xml'
-        license_url = urlparse.urlunparse(license_url_list)
+        license_url = urllib.parse.urlunparse(license_url_list)
         license_headers = []
         license_post_data = 'R{SSM}'
         license_response = ''
@@ -190,8 +181,7 @@ class UnextServiceProvider():
         return movie_content
 
     @property
-    def _session(self):
-        # type: (UnextServiceProvider) -> requests.Session
+    def _session(self) -> requests.Session:
         """
         セッション
 
@@ -204,15 +194,13 @@ class UnextServiceProvider():
             self.__session = requests.Session()
         return self.__session
 
-    __HEADERS = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
-    # type: dict
+    __HEADERS: dict[str, str] = {'User-Agent': 'under-nex-trap/0.0.1 ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     """
     User-Agent改変用ヘッダー
     """
 
     @ staticmethod
-    def __create_episode_content(src, title_code, title_name):
-        # type: (object, str, str) -> EpisodeContent
+    def __create_episode_content(src, title_code: str, title_name: str) -> EpisodeContent:
         """
         EpisodeContentの生成
 
@@ -241,8 +229,7 @@ class UnextServiceProvider():
         episode_content = EpisodeContent(episode_code, title_code, episode_name, title_name, no, display_no, introduction, isnew, islock, thumbnail_url)
         return episode_content
 
-    def __enter__(self):
-        # type: (UnextServiceProvider) -> UnextServiceProvider
+    def __enter__(self) -> UnextServiceProvider:
         """
         With句開始
 
@@ -253,8 +240,7 @@ class UnextServiceProvider():
         """
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
-        # type: (UnextServiceProvider) -> bool
+    def __exit__(self, exception_type, exception_value, traceback) -> bool:
         """
         With句終了
 

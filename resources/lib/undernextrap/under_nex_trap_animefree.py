@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
+from typing import Optional
 import urllib
 import xbmcgui
 import xbmcplugin
@@ -24,34 +22,31 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         self.__unext_service_provider = None
         self.__unext_anime_free_service_provider = None
 
-    def dispose(self):
-        # type: () -> None
+    async def dispose(self) -> None:
         """
         リソース破棄
         """
         if self.__unext_anime_free_service_provider is not None:
-            self.__unext_anime_free_service_provider.dispose()
+            await self.__unext_anime_free_service_provider.dispose()
         if self.__unext_service_provider is not None:
             self.__unext_service_provider.dispose()
         if self.__session is not None:
             self.__session.close()
 
-    def entrance(self):
-        # type: (UnderNexTrapAnimeFree) -> None
+    async def entrance(self) -> None:
         """
         初起動
         """
-        self.top()
+        await self.top()
 
-    def top(self):
-        # type: (UnderNexTrapAnimeFree) -> None
+    async def top(self) -> None:
         """
         トップコンテンツ
         """
         xbmcplugin.setPluginCategory(self.handle, 'Top')
         xbmcplugin.setContent(self.handle, 'videos')
 
-        anime_free_top_contents = self._unext_anime_free_service_provider.get_top_contents()
+        anime_free_top_contents = await self._unext_anime_free_service_provider.get_top_contents()
         for content in anime_free_top_contents:
             list_item = UnderNexTrapAnimeFree.__create_xbmcgui_list_item(content)
             url = self.get_url(self.current_episode, content.code)
@@ -62,8 +57,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
 
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_NONE)
 
-    def current_episode(self, title_code):
-        # type: (UnderNexTrapAnimeFree, str) -> None
+    def current_episode(self, title_code: str) -> None:
         """
         エピソード選択
 
@@ -87,8 +81,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
 
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_NONE)
 
-    def play_episode(self, title_code, episode_code):
-        # type: (UnderNexTrapAnimeFree, str, str) -> None
+    def play_episode(self, title_code: str, episode_code: str) -> None:
         """
         エピソード再生
 
@@ -107,8 +100,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
                               movie_content.license_post_data, movie_content.license_response)
 
     @property
-    def _session(self):
-        # type: (UnextAnimeFreeServiceProvider) -> requests.Session
+    def _session(self) -> requests.Session:
         """
         セッション
 
@@ -122,8 +114,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         return self.__session
 
     @property
-    def _unext_anime_free_service_provider(self):
-        # type: (UnextAnimeFreeServiceProvider) -> UnextAnimeFreeServiceProvider
+    def _unext_anime_free_service_provider(self) -> UnextAnimeFreeServiceProvider:
         """
         U-NEXT(無料配信)サービスプロバイダー
 
@@ -138,8 +129,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         return self.__unext_anime_free_service_provider
 
     @property
-    def _unext_service_provider(self):
-        # type: (UnextAnimeFreeServiceProvider) -> UnextServiceProvider
+    def _unext_service_provider(self) -> UnextServiceProvider:
         """
         U-NEXTサービスプロバイダー
 
@@ -153,9 +143,10 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
             self.__unext_service_provider.session = self._session
         return self.__unext_service_provider
 
-    def __play_movie(self, stream_url, stream_headers, protocol, drm, mime,
-                     license_url, license_headers, license_post_data, license_response):
-        # type: (UnderNexTrapAnimeFree, str, dict[str,str], str, str, str, str, dict[str,str], str, str) -> None
+    def __play_movie(self, stream_url: str, stream_headers: dict[str, str],
+                     protocol: str, drm: str, mime: str,
+                     license_url: str, license_headers: dict[str, str],
+                     license_post_data: str, license_response: str) -> None:
         """
         InputStream Helperでの再生
         """
@@ -165,7 +156,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
             play_item.setContentLookup(False)
             if mime is not None:
                 play_item.setMimeType(mime)
-            play_item.setProperty('inputstreamaddon', is_helper.inputstream_addon)
+            play_item.setProperty('inputstream', is_helper.inputstream_addon)
             if (stream_headers is not None) and (0 < len(stream_headers)):
                 play_item.setProperty('inputstream.adaptive.stream_headers', urllib.urlencode(stream_headers))
             play_item.setProperty('inputstream.adaptive.manifest_type', protocol)
@@ -183,9 +174,31 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
             play_item.setProperty('inputstream.adaptive.license_key', license_key)
             xbmcplugin.setResolvedUrl(self.handle, True, play_item)
 
+    async def __aenter__(self) -> UnderNexTrapAnimeFree:
+        """
+        With句開始
+
+        Returns
+        -------
+        result : UnderNexTrapAnimeFree
+            自身
+        """
+        return self
+
+    async def __aexit__(self, exception_type, exception_value, traceback) -> bool:
+        """
+        With句終了
+
+        Returns
+        -------
+        result : bool
+            True:例外を再スローしない, False:例外を再スローする
+        """
+        await self.dispose()
+        return False
+
     @ staticmethod
-    def __create_xbmcgui_list_item(src):
-        # type: (object) -> xbmcgui.ListItem, None
+    def __create_xbmcgui_list_item(src: object) -> Optional[xbmcgui.ListItem]:
         """
         リストアイテムの取得
 
@@ -206,8 +219,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         return None
 
     @ staticmethod
-    def __create_xbmcgui_list_item_for_title_content(src):
-        # type: (TitleContent) -> xbmcgui.ListItem, None
+    def __create_xbmcgui_list_item_for_title_content(src: TitleContent) -> Optional[xbmcgui.ListItem]:
         """
         リストアイテムの取得
 
@@ -232,8 +244,7 @@ class UnderNexTrapAnimeFree(ScriptAddonRouterForKodi):
         return list_item
 
     @ staticmethod
-    def __create_xbmcgui_list_item_for_episode_content(src):
-        # type: (EpisodeContent) -> xbmcgui.ListItem, None
+    def __create_xbmcgui_list_item_for_episode_content(src: EpisodeContent) -> Optional[xbmcgui.ListItem]:
         """
         リストアイテムの取得
 

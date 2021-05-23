@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-# from __future__ import annotations
+from __future__ import annotations
+from typing import Optional
 import json
 import re
 import xbmc
@@ -9,12 +7,9 @@ import requests
 from .title_content import TitleContent
 import cwebdriverinstaller
 if cwebdriverinstaller.CWebDriverInstallerHelper.append_import_path():
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support import expected_conditions as EC
-    import chromedriver_binary  # noqa:F401 # webdriverをChromeに設定
+    from pyppeteer import launch
+    from pyppeteer.browser import Browser
+    from pyppeteer.page import Page
 
 
 class UnextAnimeFreeServiceProvider():
@@ -25,46 +20,47 @@ class UnextAnimeFreeServiceProvider():
         self.__browser = None
         self.__browser_share = False
         self.__browser_default_user_agent = None
-        self.__browser_wait = None
+        self.__page = None
         self.__session = None
         self.__session_share = False
 
-    def dispose(self):
-        # type: () -> None
+    async def dispose(self) -> None:
         """
         リソース破棄
         """
         if (self.__session is not None) and (not self.__session_share):
             self.__session.close()
             self.__session = None
+            self.__session_share = False
+        if self.__page is not None:
+            await self.__page.close()
+            self.__page = None
         self.__browser_default_user_agent = None
-        self.__browser_wait = None
         if (self.__browser is not None) and (not self.__browser_share):
-            self.__browser.quit()
+            await self.__browser.close()
             self.__browser = None
+            self.__browser_share = False
 
     @property
-    def browser(self):
-        # type: (UnextAnimeFreeServiceProvider) -> webdriver.remote.webdriver.WebDriver, None
+    def browser(self) -> Optional[Browser]:
         """
         ブラウザ
 
         Returns
         -------
-        result : webdriver.remote.webdriver.WebDriver, None
+        result : Optional[Browser]
             ブラウザ
         """
         return self.__browser
 
     @browser.setter
-    def browser(self, value):
-        # type: (UnextAnimeFreeServiceProvider, webdriver.remote.webdriver.WebDriver) -> None
+    def browser(self, value: Optional[Browser]) -> None:
         """
         ブラウザ
 
         Parameters
         -------
-        value : webdriver.remote.webdriver.WebDriver, None
+        value : Optional[Browser]
             ブラウザ
         """
         if (self.__browser is not None) and (not self.__browser_share):
@@ -73,27 +69,25 @@ class UnextAnimeFreeServiceProvider():
         self.__browser_share = value is not None
 
     @property
-    def session(self):
-        # type: (UnextAnimeFreeServiceProvider) -> requests.Session, None
+    def session(self) -> Optional[requests.Session]:
         """
         セッション
 
         Returns
         -------
-        result : requests.Session, None
+        result : Optional[requests.Session]
             セッション
         """
         return self.__session
 
     @session.setter
-    def session(self, value):
-        # type: (UnextAnimeFreeServiceProvider, requests.Session) -> None
+    def session(self, value: Optional[requests.Session]) -> None:
         """
         セッション
 
         Parameters
         -------
-        value : requests.Session, None
+        value : Optional[requests.Session]
             セッション
         """
         if (self.__session is not None) and (not self.__session_share):
@@ -101,26 +95,24 @@ class UnextAnimeFreeServiceProvider():
         self.__session = value
         self.__session_share = value is not None
 
-    def get_top_contents(self):
-        # type: (UnextAnimeFreeServiceProvider) -> list[TitleContent]
+    async def get_top_contents(self) -> Optional[list[TitleContent]]:
         """
         トップコンテンツの取得
 
         Returns
         -------
-        value : list[TitleContent], None
+        value : Optional[list[TitleContent]]
             タイトル情報群
         """
+        page = await self._page
         url = r'https://video.unext.jp/feature/cp/animefree/'
-        self._browser.get(url)
-        locator = (By.CSS_SELECTOR, r'div#js-contentsArea a[class*="p-titlePanel"]')
-        self._browser_wait.until(EC.presence_of_element_located(locator))
-        a_tags = self._browser.find_elements(*locator)
+        await page.goto(url)
+        a_tags = await page.querySelectorAll(r'div#js-contentsArea a[class*="p-titlePanel"]')
         noname_contents = []
         for a_tag in a_tags:
-            href = a_tag.get_attribute(r'href')
-            img_tag = a_tag.find_element(By.CSS_SELECTOR, r'img')
-            thumbnail = img_tag.get_attribute(r'src')
+            href = await page.evaluate('x => x.getAttribute("href")', a_tag)
+            img_tag = await a_tag.querySelector(r'img')
+            thumbnail = await page.evaluate('x => x.getAttribute("src")', img_tag)
             title_code = UnextAnimeFreeServiceProvider.__get_title_code_from_url(href)
             noname_contents.append({'title_code': title_code, 'thumbnail': thumbnail})
 
@@ -128,7 +120,7 @@ class UnextAnimeFreeServiceProvider():
         url = r'https://video-api.unext.jp/api/1/cmsuser/title/meta?title_codes=' + title_codes
         meta_api_get = self._session.get(url, headers=UnextAnimeFreeServiceProvider.__HEADERS)
         if meta_api_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(meta_api_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(meta_api_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         meta_api_result = json.loads(meta_api_get.text)
         title_contents = []
@@ -140,41 +132,40 @@ class UnextAnimeFreeServiceProvider():
         return title_contents
 
     @property
-    def _browser(self):
-        # type: (UnextAnimeFreeServiceProvider) -> webdriver.remote.webdriver.WebDriver
+    async def _browser(self) -> Browser:
         """
         ブラウザ
 
         Returns
         -------
-        result : webdriver.remote.webdriver.WebDriver
+        result : Browser
             ブラウザ
         """
         if self.__browser is None:
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-gpu')
-            options.page_load_strategy = 'eager'
-            options.binary_location = cwebdriverinstaller.CWebDriverInstaller.chrome_browser_path()
-            if self.__browser_default_user_agent is None:
-                with webdriver.Chrome(options=options) as default_browser:
-                    self.__browser_default_user_agent = default_browser.execute_script("return navigator.userAgent")
-            options.add_argument(
-                '--user-agent=' + UnextAnimeFreeServiceProvider.__CUSTOM_USER_AGENT + ' ' + xbmc.getUserAgent() + ' ' + self.__browser_default_user_agent)
-            self.__browser = webdriver.Chrome(options=options)
+            browser_path = cwebdriverinstaller.CWebDriverInstaller.chrome_browser_path()
+            self.__browser = await launch({
+                'args': ['--no-sandbox'],
+                'executablePath': browser_path,
+                'handleSIGINT': False,
+                'handleSIGTERM': False,
+                'handleSIGHUP': False,
+            })
         return self.__browser
 
-    @ property
-    def _browser_wait(self):
-        # type: (UnextAnimeFreeServiceProvider) -> WebDriverWait
-        if self.__browser_wait is None:
-            self.__browser_wait = WebDriverWait(self._browser, 10)
-        return self.__browser_wait
+    @property
+    async def _page(self) -> Page:
+        if self.__page is None:
+            browser = await self._browser
+            page = await browser.newPage()
+            if self.__browser_default_user_agent is None:
+                self.__browser_default_user_agent = await page.evaluate('() => navigator.userAgent')
+            user_agent = UnextAnimeFreeServiceProvider.__CUSTOM_USER_AGENT + ' ' + xbmc.getUserAgent() + ' ' + self.__browser_default_user_agent
+            await page.setUserAgent(user_agent)
+            self.__page = page
+        return self.__page
 
     @property
-    def _session(self):
-        # type: (UnextAnimeFreeServiceProvider) -> requests.Session
+    def _session(self) -> requests.Session:
         """
         セッション
 
@@ -187,27 +178,23 @@ class UnextAnimeFreeServiceProvider():
             self.__session = requests.Session()
         return self.__session
 
-    __CUSTOM_USER_AGENT = 'under-nex-trap-animefree/0.0.1'
-    # type: str
+    __CUSTOM_USER_AGENT: str = 'under-nex-trap-animefree/0.0.1'
     """
     カスタムUser-Agent
     """
 
-    __HEADERS = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
-    # type: dict
+    __HEADERS: dict[str, str] = {'User-Agent': __CUSTOM_USER_AGENT + ' ' + requests.utils.default_user_agent() + ' ' + xbmc.getUserAgent()}
     """
     User-Agent改変用ヘッダー
     """
 
-    __TITLE_CODE_FROM_URL = re.compile(r'SID\d+')
-    # type: re.SRE_Pattern
+    __TITLE_CODE_FROM_URL: re.Pattern = re.compile(r'SID\d+')
     """
     URLからタイトルコードを取得する正規表現
     """
 
     @ staticmethod
-    def __get_title_code_from_url(url):
-        # type: (str) -> str
+    def __get_title_code_from_url(url: str) -> str:
         """
         URLからタイトルコードを取得する
 
@@ -224,8 +211,7 @@ class UnextAnimeFreeServiceProvider():
         title_code = UnextAnimeFreeServiceProvider.__TITLE_CODE_FROM_URL.search(url).group(0)
         return title_code
 
-    def __enter__(self):
-        # type: (UnextAnimeFreeServiceProvider) -> UnextAnimeFreeServiceProvider
+    async def __aenter__(self) -> UnextAnimeFreeServiceProvider:
         """
         With句開始
 
@@ -236,8 +222,7 @@ class UnextAnimeFreeServiceProvider():
         """
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
-        # type: (UnextAnimeFreeServiceProvider) -> bool
+    async def __aexit__(self, exception_type, exception_value, traceback) -> bool:
         """
         With句終了
 
@@ -246,5 +231,5 @@ class UnextAnimeFreeServiceProvider():
         result : bool
             True:例外を再スローしない, False:例外を再スローする
         """
-        self.dispose()
+        await self.dispose()
         return False
