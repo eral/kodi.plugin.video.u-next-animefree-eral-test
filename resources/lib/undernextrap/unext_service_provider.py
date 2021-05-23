@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 import json
-import urllib
+import urllib.parse
 import xbmc
 import requests
 from .episode_content import EpisodeContent
@@ -74,7 +74,7 @@ class UnextServiceProvider():
             'title_code': [title_code]
         })
         if current_episode_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(current_episode_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         episode_contents = []
         if current_episode_get.text is not None:
@@ -109,7 +109,7 @@ class UnextServiceProvider():
             'title_code': [title_code]
         })
         if current_episode_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(current_episode_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(current_episode_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         elif current_episode_get.text is None:
             xbmc.log('Error:\nサーバーからレスポンスが返されませんでした', xbmc.LOGDEBUG)
@@ -147,7 +147,7 @@ class UnextServiceProvider():
             'episode_code': [episode_code]
         })
         if player_get.status_code != 200:
-            xbmc.log('Error:' + unicode(str(player_get.status_code)) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(player_get.status_code) + '\nサーバーからエラーステータスが返されました', xbmc.LOGDEBUG)
             return
         player = json.loads(player_get.text)
         if player['common']['result']['errorCode'] != '':
@@ -155,18 +155,18 @@ class UnextServiceProvider():
             return
         entity = player['data']['entities_data']['playlist_url']
         if entity['result_status'] != 200:
-            xbmc.log('Error:' + unicode(str(entity['result_status'])) + '\nサーバーからエラーデータが返されました', xbmc.LOGDEBUG)
+            xbmc.log('Error:' + str(entity['result_status']) + '\nサーバーからエラーデータが返されました', xbmc.LOGDEBUG)
             return
         play_token = entity['play_token']
         movie_profile = entity['url_info'][0]['movie_profile']['dash']
         playlist_url_list = list(urllib.parse.urlparse(movie_profile['playlist_url']))
         playlist_url_query = urllib.parse.parse_qs(playlist_url_list[4])
         playlist_url_query['play_token'] = [play_token]
-        playlist_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in playlist_url_query.items()})
+        playlist_url_list[4] = urllib.parse.urlencode({k: str(v[0]) for k, v in playlist_url_query.items()})
 
         license_url_list = list(urllib.parse.urlparse(movie_profile['license_url_list']['widevine']))
         license_url_query = {'play_token': [play_token]}
-        license_url_list[4] = urllib.urlencode({k: str(v[0]) for k, v in license_url_query.items()})
+        license_url_list[4] = urllib.parse.urlencode({k: str(v[0]) for k, v in license_url_query.items()})
 
         movie_url = urllib.parse.urlunparse(playlist_url_list)
         movie_headers = []

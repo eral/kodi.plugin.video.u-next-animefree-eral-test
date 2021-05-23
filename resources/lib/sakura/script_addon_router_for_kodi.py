@@ -4,20 +4,21 @@ import sys
 import urllib.parse
 import pickle
 import base64
+import types
 
 
 class ScriptAddonRouterForKodi(object):
-    def __init__(self, entrance_funciton: str = 'entrance', *args: list[object]) -> None:
+    def __init__(self, entrance_function_name: str = 'entrance', *args: list[object]) -> None:
         """
         コンストラクタ
         """
         self.__url = sys.argv[0]
         self.__handle = int(sys.argv[1])
         self.__query = sys.argv[2][1:]
-        self.__entrance_funciton_name = ScriptAddonRouterForKodi.__get_attr_name(entrance_funciton)
+        self.__entrance_funciton_name = ScriptAddonRouterForKodi.__get_attr_name(entrance_function_name)
         self.__entrance_funciton_args = args
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         """
         表示
         """
@@ -26,7 +27,9 @@ class ScriptAddonRouterForKodi(object):
             attr_name = self.__entrance_funciton_name
             args = self.__entrance_funciton_args
         funciton = getattr(self, attr_name)
-        funciton(*args)
+        result = funciton(*args)
+        if isinstance(result, types.CoroutineType):
+            await result
 
     @ property
     def url(self) -> str:

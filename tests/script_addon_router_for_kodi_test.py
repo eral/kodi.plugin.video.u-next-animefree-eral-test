@@ -1,5 +1,8 @@
 from __future__ import annotations
 import unittest
+from unittest.mock import patch, MagicMock
+import sys
+import asyncio
 from resources.lib.sakura import ScriptAddonRouterForKodi
 
 
@@ -40,41 +43,41 @@ class TestScriptAddonRouterForKodi(unittest.TestCase):
         query = 'f=function1'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, [])
+        self.assertEqual(args, [])
 
     def test_parse_url_query_arg_int(self):
         query = 'f=function1&0=i123'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, [123])
+        self.assertEqual(args, [123])
         self.assertEqual(type(args[0]), int)
 
     def test_parse_url_query_arg_float(self):
         query = 'f=function1&0=f123.4'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, [123.4])
+        self.assertEqual(args, [123.4])
         self.assertEqual(type(args[0]), float)
 
     def test_parse_url_query_arg_bool(self):
         query = 'f=function1&0=bTrue'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, [True])
+        self.assertEqual(args, [True])
         self.assertEqual(type(args[0]), bool)
 
     def test_parse_url_query_arg_str(self):
         query = 'f=function1&0=sabc'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, ['abc'])
+        self.assertEqual(args, ['abc'])
         self.assertEqual(type(args[0]), str)
 
     def test_parse_url_query_args(self):
         query = 'f=function1&0=i123&1=f123.4&2=bTrue&3=sabc'
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function1')
-        self.assertListEqual(args, [123, 123.4, True, 'abc'])
+        self.assertEqual(args, [123, 123.4, True, 'abc'])
         self.assertEqual(type(args[0]), int)
         self.assertEqual(type(args[1]), float)
         self.assertEqual(type(args[2]), bool)
@@ -86,7 +89,7 @@ class TestScriptAddonRouterForKodi(unittest.TestCase):
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function2')
         self.assertEqual(type(args[0]), type(value))
-        self.assertListEqual(args[0], value)
+        self.assertEqual(args[0], value)
 
     def test_get_and_parse_url_query_arg_tuple(self):
         value = (123, 123.4, True, 'abc')
@@ -94,7 +97,7 @@ class TestScriptAddonRouterForKodi(unittest.TestCase):
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function2')
         self.assertEqual(type(args[0]), type(value))
-        self.assertTupleEqual(args[0], value)
+        self.assertEqual(args[0], value)
 
     def test_get_and_parse_url_query_arg_dict(self):
         value = {'key0': 123, 'elem1': 123.4, 'arg2': True, 'index3': 'abc'}
@@ -102,7 +105,67 @@ class TestScriptAddonRouterForKodi(unittest.TestCase):
         func_str, args = ScriptAddonRouterForKodi.parse_url_query(query)
         self.assertEqual(func_str, 'function2')
         self.assertEqual(type(args[0]), type(value))
-        self.assertDictEqual(args[0], value)
+        self.assertEqual(args[0], value)
+
+    async def test_entrance_call(self):
+        sys_argv_mock = ['', 1, '']
+        with patch.object(sys, 'argv', sys_argv_mock):
+            test = ScriptAddonRouterForKodiTest()
+            test.entrance = MagicMock()
+            await test()
+            test.entrance.assert_called_once()
+
+    async def test_no_arg_function_call(self):
+        sys_argv_mock = ['', 1, '?f=no_arg_function']
+        with patch.object(sys, 'argv', sys_argv_mock):
+            test = ScriptAddonRouterForKodiTest()
+            with patch.object(test, 'no_arg_function', MagicMock()):
+                await test()
+                test.no_arg_function.assert_called_once()
+
+    async def test_arg_function_call(self):
+        sys_argv_mock = ['', 1, '?f=arg_function&0=f123.4']
+        with patch.object(sys, 'argv', sys_argv_mock):
+            test = ScriptAddonRouterForKodiTest()
+            with patch.object(test, 'arg_function', MagicMock()):
+                await test()
+                test.arg_function.assert_called_once_with(123.4)
+
+    async def test_async_function_call(self):
+        sys_argv_mock = ['', 1, '?f=async_function']
+        with patch.object(sys, 'argv', sys_argv_mock):
+            test = ScriptAddonRouterForKodiTest()
+            with patch.object(test, 'async_function_leaf', MagicMock()):
+                await test()
+                self.assertEqual(test.async_function_leaf.call_count, 4)
+
+
+class ScriptAddonRouterForKodiTest(ScriptAddonRouterForKodi):
+    def __init__(self):
+        super(ScriptAddonRouterForKodiTest, self).__init__(self.entrance)
+
+    def entrance(self) -> None:
+        pass
+
+    def no_arg_function(self) -> None:
+        pass
+
+    def arg_function(self, value) -> None:
+        pass
+
+    async def async_function(self) -> None:
+        await self.async_function_nest()
+        await asyncio.sleep(0.1)
+        await self.async_function_nest()
+
+    async def async_function_nest(self) -> None:
+        self.async_function_leaf()
+        await asyncio.sleep(0.1)
+        self.async_function_leaf()
+        await asyncio.sleep(0.1)
+
+    def async_function_leaf(self) -> None:
+        pass
 
 
 if __name__ == '__main__':
