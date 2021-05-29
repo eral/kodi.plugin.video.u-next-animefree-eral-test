@@ -14,7 +14,6 @@ if cwebdriverinstaller.CWebDriverInstallerHelper.append_import_path():
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support import expected_conditions as EC
-    import chromedriver_binary  # noqa:F401 # webdriverをChromeに設定
 
 
 class UnextAnimeFreeServiceProvider():
@@ -151,6 +150,7 @@ class UnextAnimeFreeServiceProvider():
             ブラウザ
         """
         if self.__browser is None:
+            driver = cwebdriverinstaller.CWebDriverInstaller.chrome_driver_path()
             options = Options()
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
@@ -158,11 +158,11 @@ class UnextAnimeFreeServiceProvider():
             options.page_load_strategy = 'eager'
             options.binary_location = cwebdriverinstaller.CWebDriverInstaller.chrome_browser_path()
             if self.__browser_default_user_agent is None:
-                with webdriver.Chrome(options=options) as default_browser:
+                with webdriver.Chrome(driver, options=options) as default_browser:
                     self.__browser_default_user_agent = default_browser.execute_script("return navigator.userAgent")
             options.add_argument(
                 '--user-agent=' + UnextAnimeFreeServiceProvider.__CUSTOM_USER_AGENT + ' ' + xbmc.getUserAgent() + ' ' + self.__browser_default_user_agent)
-            self.__browser = webdriver.Chrome(options=options)
+            self.__browser = webdriver.Chrome(driver, options=options)
         return self.__browser
 
     @ property
